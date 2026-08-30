@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ORDER_EMAIL } from "../lib/config";
+import { REQUEST_FORM_ACTION, ENTRY } from "../lib/config";
 import { reveal, stagger } from "../lib/motion";
 
 const process = [
@@ -9,15 +9,14 @@ const process = [
   { n: "03", t: "We make it", d: "Made in-house in your choice of colors, test-fitted, and shipped to your door." },
 ];
 
+const label = "font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-fg";
+const field =
+  "w-full rounded-md border-2 border-border bg-card px-3 py-2.5 text-sm placeholder:text-muted-fg focus:outline-none";
+
 export default function Commissions() {
-  const [idea, setIdea] = useState("");
-  const mailto = () => {
-    const subject = encodeURIComponent("Custom print request");
-    const body = encodeURIComponent(
-      `What I need:\n${idea || "(describe the object)"}\n\nRough size / measurements:\n\nDeadline (if any):\n`
-    );
-    return `mailto:${ORDER_EMAIL}?subject=${subject}&body=${body}`;
-  };
+  const [sent, setSent] = useState(false);
+  const [deadline, setDeadline] = useState("");
+  const [y, m, d] = deadline ? deadline.split("-") : ["", "", ""];
 
   return (
     <section id="custom" className="border-t-2 border-border px-[5vw] py-16">
@@ -43,23 +42,109 @@ export default function Commissions() {
           </motion.li>
         ))}
       </motion.ol>
-      <div className="mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row">
-        <label className="sr-only" htmlFor="idea">Describe what you need printed</label>
-        <input
-          id="idea"
-          value={idea}
-          onChange={(e) => setIdea(e.target.value)}
-          placeholder="e.g. a wall mount for my headset that clips to a shelf edge"
-          className="hardcard flex-1 rounded-md px-4 py-3 text-sm placeholder:text-muted-fg focus:outline-none"
-        />
-        <motion.a
-          whileTap={{ scale: 0.98 }}
-          href={mailto()}
-          className="display rounded-md border-2 border-border bg-foreground px-6 py-3 text-center text-background transition-colors hover:bg-primary hover:text-primary-fg"
+
+      {sent ? (
+        <div className="hardcard mt-8 max-w-3xl rounded-md p-6">
+          <p className="display text-xl">Request received.</p>
+          <p className="mt-2 text-sm text-muted-fg">
+            You'll hear from us within 24 hours with a 3D preview and a locked price.
+          </p>
+        </div>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const data = new FormData(e.currentTarget);
+            fetch(REQUEST_FORM_ACTION, { method: "POST", mode: "no-cors", body: data });
+            setSent(true);
+          }}
+          className="hardcard mt-8 max-w-3xl rounded-md p-6"
         >
-          Start a request
-        </motion.a>
-      </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={label} htmlFor="rq-name">Your name *</label>
+              <input id="rq-name" name={`entry.${ENTRY.name}`} required className={`${field} mt-1`} />
+            </div>
+            <div>
+              <label className={label} htmlFor="rq-email">Email *</label>
+              <input id="rq-email" name="emailAddress" type="email" required className={`${field} mt-1`} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={label} htmlFor="rq-desc">What do you need? Describe the object and what it's for. *</label>
+              <textarea
+                id="rq-desc"
+                name={`entry.${ENTRY.description}`}
+                required
+                rows={3}
+                placeholder="e.g. a wall mount for my headset that clips to a shelf edge"
+                className={`${field} mt-1 resize-y`}
+              />
+            </div>
+            <div>
+              <label className={label} htmlFor="rq-size">Rough size or key measurements</label>
+              <input id="rq-size" name={`entry.${ENTRY.size}`} className={`${field} mt-1`} />
+            </div>
+            <div>
+              <label className={label} htmlFor="rq-colors">Color preferences</label>
+              <input id="rq-colors" name={`entry.${ENTRY.colors}`} className={`${field} mt-1`} />
+            </div>
+            <div>
+              <label className={label} htmlFor="rq-where">Where will it live?</label>
+              <select id="rq-where" name={`entry.${ENTRY.where}`} defaultValue="" className={`${field} mt-1`}>
+                <option value="" disabled>Choose one</option>
+                <option>Shelf or desk</option>
+                <option>Wall mounted</option>
+                <option>Outdoors</option>
+                <option>Worn or handled daily</option>
+                <option>Somewhere else</option>
+              </select>
+            </div>
+            <div>
+              <label className={label} htmlFor="rq-budget">Budget range *</label>
+              <select id="rq-budget" name={`entry.${ENTRY.budget}`} required defaultValue="" className={`${field} mt-1`}>
+                <option value="" disabled>Choose one</option>
+                <option>Under $35</option>
+                <option>$35 to $75</option>
+                <option>$75 to $150</option>
+                <option>Over $150</option>
+                <option>Not sure yet</option>
+              </select>
+            </div>
+            <div>
+              <label className={label} htmlFor="rq-qty">How many do you need?</label>
+              <input id="rq-qty" name={`entry.${ENTRY.quantity}`} inputMode="numeric" className={`${field} mt-1`} />
+            </div>
+            <div>
+              <label className={label} htmlFor="rq-deadline">Deadline, if any</label>
+              <input
+                id="rq-deadline"
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className={`${field} mt-1`}
+              />
+              {deadline && (
+                <>
+                  <input type="hidden" name={`entry.${ENTRY.deadline}_year`} value={y} />
+                  <input type="hidden" name={`entry.${ENTRY.deadline}_month`} value={String(Number(m))} />
+                  <input type="hidden" name={`entry.${ENTRY.deadline}_day`} value={String(Number(d))} />
+                </>
+              )}
+            </div>
+            <div className="sm:col-span-2">
+              <label className={label} htmlFor="rq-links">Reference links (similar products, photos hosted anywhere)</label>
+              <input id="rq-links" name={`entry.${ENTRY.links}`} className={`${field} mt-1`} />
+            </div>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            className="display mt-5 rounded-md border-2 border-border bg-foreground px-6 py-3 text-background transition-colors hover:bg-primary hover:text-primary-fg"
+          >
+            Start a request
+          </motion.button>
+        </form>
+      )}
     </section>
   );
 }
