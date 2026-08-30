@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Layerworks tokens, expressed shadcn-style: semantic vars, 4px scale, radius token */
+@theme {
+  --color-background: #f2f3f0;
+  --color-foreground: #16181d;
+  --color-card: #ffffff;
+  --color-primary: #c22e2a;      /* PLA scarlet */
+  --color-primary-fg: #ffffff;
+  --color-accent: #00a14b;       /* slicer green */
+  --color-muted: #e6e8e3;
+  --color-muted-fg: #5c6066;
+  --color-border: #16181d;
+  --color-hairline: #d8dbd4;
+
+  --font-display: "Archivo", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius-lg: 0.875rem;
+  --radius-md: 0.625rem;
+  --radius-sm: 0.5rem;
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { @apply bg-background text-foreground font-sans antialiased; }
+
+.display { @apply font-display font-black uppercase tracking-tight leading-[1.02]; }
+.hardcard { @apply bg-card border-2 border-border rounded-lg; }
+:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+
+model-viewer {
+  width: 100%;
+  height: min(58vh, 540px);
+  display: block;
+  background: radial-gradient(120% 90% at 50% 20%, #fff 0%, #e8eae6 100%);
+}
