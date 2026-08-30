@@ -291,6 +291,11 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
         </model-viewer>
         )}
         {!ready && <div style={{ height: "min(58vh, 540px)" }} />}
+        {loaded && !failed && (
+          <span className={`pointer-events-none absolute bottom-3 right-3 ${chip} text-muted-fg`}>
+            drag to spin it around
+          </span>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-2.5 border-t-2 border-border bg-background p-3">
         <motion.button
@@ -304,8 +309,8 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
           }`}
         >
           <span className="grid">
-            <span className="invisible col-start-1 row-start-1">Pause mechanism</span>
-            <span className="col-start-1 row-start-1">{playing ? "Pause mechanism" : "Play mechanism"}</span>
+            <span className="invisible col-start-1 row-start-1">Pause</span>
+            <span className="col-start-1 row-start-1">{playing ? "Pause" : "Play"}</span>
           </span>
         </motion.button>
         {dims.length + points.length > 0 && (
@@ -338,9 +343,6 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
         >
           Customize
         </motion.button>
-        <span className="ml-auto text-xs text-muted-fg">
-          drag to spin it around
-        </span>
         {customize && (
           <div className="w-full border-t-2 border-border pt-3">
             {PARTS.map((part) => (
