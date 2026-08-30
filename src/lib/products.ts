@@ -23,6 +23,24 @@ export type Product = {
   tint: string;          // card tile accent
 };
 
+// Every spool physically in stock; per-part customization draws from this list
+export const FILAMENTS: { name: string; hex: string }[] = [
+  { name: "Jade White", hex: "#f2f3f0" },
+  { name: "Black", hex: "#161616" },
+  { name: "Silver", hex: "#8b9398" },
+  { name: "Red", hex: "#c22e2a" },
+  { name: "Orange", hex: "#e07a2f" },
+  { name: "Yellow", hex: "#f5d020" },
+  { name: "Green", hex: "#3f8f4f" },
+  { name: "Cyan", hex: "#4fb6c9" },
+  { name: "Blue", hex: "#2f6bbf" },
+  { name: "Marine Blue", hex: "#2e5c8a" },
+  { name: "Purple", hex: "#6b4ba1" },
+  { name: "Brown", hex: "#6f4a35" },
+  { name: "Beige", hex: "#d9c9a8" },
+  { name: "Terracotta", hex: "#b65a41" },
+];
+
 export const products: Product[] = [
   {
     slug: "capsule-slab",
@@ -37,16 +55,9 @@ export const products: Product[] = [
       src: "models/capsule_slab.glb?v=5",
       alt: "Capsule Slab card display: the top half lifts off, a toploader slides down the rails, and the top snaps back on",
       animation: "Scene",
-      // every colorway maps to filament physically in stock
-      colorways: [
-        { name: "Scarlet", materials: { pk_red: "#c22e2a", pk_black: "#161616" } },
-        { name: "Marine", materials: { pk_red: "#2e5c8a", pk_black: "#161616" } },
-        { name: "Night", materials: { pk_red: "#1b1c20", pk_black: "#f5d020" } },
-        { name: "Violet", materials: { pk_red: "#6b4ba1", pk_black: "#161616" } },
-        { name: "Frost", materials: { pk_red: "#f2f3f0", pk_black: "#c22e2a" } },
-        { name: "Terra", materials: { pk_red: "#b65a41", pk_black: "#161616" } },
-        { name: "Slate", materials: { pk_red: "#8b9398", pk_black: "#161616" } },
-      ],
+      // no curated presets: top and base are free to land anywhere in
+      // FILAMENTS. the stripe is the one fixed constant, see HOUSE_STRIPE
+      // in ModelStage, so it never keeps the old white/black look in place
       callouts: [
         { label: "4.9\" wide", from: "-63.3 -88 24", to: "63.3 -88 24", labelAt: "0 -102 24" },
         { label: "8.3\" tall", from: "92 -55.5 24", to: "92 155 24", labelAt: "108 50 24" },

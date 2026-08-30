@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { FILAMENTS } from "../lib/products";
 
 type MV = HTMLElement & {
   play: (o?: { repetitions: number }) => void;
@@ -20,6 +21,29 @@ type PointCallout = { label: string; position: string; normal?: string };
 type DimCallout = { label: string; from: string; to: string; labelAt: string };
 export type Callout = PointCallout | DimCallout;
 export type Colorway = { name: string; materials: Record<string, string> };
+// House signature: every Layerworks piece has a black stripe. It's the one
+// fixed constant across the whole catalog. Top and base are the only parts
+// that customize or randomize, on load and on every idle-cycle tick, so no
+// two visits look alike. The one guard: never let a random roll (or the
+// idle cycle) land on red top + white base together on the site's own
+// initiative, that's the specific pairing we're keeping off the default
+// state. A customer dialing it in themselves in the customizer is their
+// choice, not ours, which is the distinction the whole trade-dress
+// mitigation rests on. See ip-sell-check.
+const HOUSE_STRIPE = "#161616";
+const RED_HEX = "#c22e2a";
+const WHITE_HEX = "#f2f3f0";
+const PARTS: { label: string; mat: string }[] = [
+  { label: "Top", mat: "pk_red" },
+  { label: "Base", mat: "pk_white" },
+];
+const randomHex = () => FILAMENTS[Math.floor(Math.random() * FILAMENTS.length)].hex;
+const withHouse = (m: Record<string, string> = {}): Record<string, string> => {
+  const top = m.pk_red ?? randomHex();
+  let base = m.pk_white ?? randomHex();
+  while (top === RED_HEX && base === WHITE_HEX) base = randomHex();
+  return { pk_red: top, pk_white: base, pk_black: HOUSE_STRIPE };
+};
 type Props = {
   src: string;
   alt: string;
@@ -50,8 +74,13 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(true);
-  const [cw, setCw] = useState(0);
+  const [colors, setColors] = useState<Record<string, string>>(() =>
+    withHouse(colorways?.[0]?.materials)
+  );
   const [showDims, setShowDims] = useState(true);
+  const [customize, setCustomize] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const shown = useRef<Record<string, string>>({});
   const reduceMotion = useReducedMotion();
   const dims = (callouts ?? []).filter(isDim);
   const points = (callouts ?? []).filter((c): c is PointCallout => !isDim(c));
@@ -81,15 +110,56 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
     };
   }, [ready, reduceMotion]);
 
+  // ease every color change over ~350ms so both auto-cycling and clicks feel deliberate
   useEffect(() => {
     const el = mv.current;
-    if (!el || !loaded || !colorways?.length) return;
-    const pick = colorways[Math.min(cw, colorways.length - 1)];
-    for (const [matName, hex] of Object.entries(pick.materials)) {
-      const mat = el.model?.materials.find((m) => m.name === matName);
-      mat?.pbrMetallicRoughness.setBaseColorFactor(hexToFactor(hex));
+    if (!el || !loaded) return;
+    const from: Record<string, [number, number, number, number]> = {};
+    const to: Record<string, [number, number, number, number]> = {};
+    for (const [matName, hex] of Object.entries(colors)) {
+      from[matName] = hexToFactor(shown.current[matName] ?? hex);
+      to[matName] = hexToFactor(hex);
     }
-  }, [loaded, cw, colorways]);
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min((now - t0) / 350, 1);
+      const e = 1 - Math.pow(1 - t, 3);
+      for (const matName of Object.keys(to)) {
+        const mat = el.model?.materials.find((m) => m.name === matName);
+        const a = from[matName], b = to[matName];
+        mat?.pbrMetallicRoughness.setBaseColorFactor([
+          a[0] + (b[0] - a[0]) * e,
+          a[1] + (b[1] - a[1]) * e,
+          a[2] + (b[2] - a[2]) * e,
+          1,
+        ]);
+      }
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else shown.current = { ...colors };
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [loaded, colors]);
+
+  // idle showcase: randomize top and base independently across the full
+  // palette. the stripe never moves, that consistency is the point.
+  useEffect(() => {
+    if (!loaded || touched || reduceMotion || !playing) return;
+    const id = setInterval(() => {
+      setColors((current) => {
+        const next = { ...current };
+        for (const part of PARTS) {
+          const choices = FILAMENTS.filter((f) => f.hex !== current[part.mat]);
+          const pick = choices[Math.floor(Math.random() * choices.length)];
+          if (pick) next[part.mat] = pick.hex;
+        }
+        if (next.pk_red === RED_HEX && next.pk_white === WHITE_HEX) next.pk_white = current.pk_white;
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(id);
+  }, [loaded, touched, reduceMotion, playing]);
 
   // keep the measurement lines glued to their 3D endpoints
   useEffect(() => {
@@ -208,7 +278,7 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
               className="pointer-events-none absolute inset-0 h-full w-full"
               aria-hidden="true"
             >
-              {dims.map((d, i) => (
+              {showDims && dims.map((d, i) => (
                 <line
                   key={d.label}
                   id={`dim-${i}`}
@@ -252,37 +322,70 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
             Dimensions
           </motion.button>
         )}
-        {colorways && colorways.length > 1 && (
-          <div role="group" aria-label="Colorway" className="flex items-center gap-0.5">
-            {colorways.map((c, i) => (
-              <button
-                key={c.name}
-                aria-pressed={i === cw}
-                aria-label={c.name}
-                title={c.name}
-                onClick={() => setCw(i)}
-                className="grid h-9 w-9 place-items-center rounded-full"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`h-5 w-5 rounded-full border-2 transition-transform ${
-                    i === cw ? "scale-110 ring-2 ring-foreground ring-offset-1" : "group-hover:scale-110"
-                  }`}
-                  style={{
-                    background: c.materials.pk_red ?? "#ccc",
-                    borderColor: c.materials.pk_black ?? "var(--color-border)",
-                  }}
-                />
-              </button>
-            ))}
-            <span className="ml-1 font-mono text-[10px] font-semibold text-muted-fg">
-              {colorways[cw]?.name}
-            </span>
-          </div>
-        )}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => {
+            setTouched(true);
+            setCustomize((v) => !v);
+          }}
+          aria-pressed={customize}
+          aria-expanded={customize}
+          className={`rounded-md border-2 px-3 py-2 font-mono text-xs font-semibold transition-colors ${
+            customize
+              ? "border-border bg-foreground text-background"
+              : "border-border bg-card hover:bg-foreground hover:text-background"
+          }`}
+        >
+          Customize
+        </motion.button>
         <span className="ml-auto text-xs text-muted-fg">
           drag to spin it around
         </span>
+        {customize && (
+          <div className="w-full border-t-2 border-border pt-3">
+            {PARTS.map((part) => (
+              <div key={part.mat} className="mb-1 flex flex-wrap items-center gap-0.5">
+                <span className="w-14 font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-fg">
+                  {part.label}
+                </span>
+                {FILAMENTS.map((f) => (
+                  <button
+                    key={f.name}
+                    aria-pressed={colors[part.mat] === f.hex}
+                    aria-label={`${part.label}: ${f.name}`}
+                    title={f.name}
+                    onClick={() => {
+                      setTouched(true);
+                      setColors((c) => ({ ...c, [part.mat]: f.hex }));
+                    }}
+                    className="relative grid h-7 w-7 place-items-center rounded-sm border border-border"
+                    style={{ background: f.hex }}
+                  >
+                    {colors[part.mat] === f.hex && (
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 16 16"
+                        className="h-3.5 w-3.5 drop-shadow-[0_0_1px_rgba(0,0,0,0.9)]"
+                      >
+                        <path
+                          d="M3 8.5l3 3 7-7"
+                          fill="none"
+                          stroke="#fff"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ))}
+            <p className="mt-1 font-mono text-[10px] text-muted-fg">
+              the black stripe is the same on every Layerworks piece, top and base are yours to pick, and every color is a filament we stock printed exactly as shown
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
