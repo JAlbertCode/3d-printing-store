@@ -55,10 +55,9 @@ export const products: Product[] = [
       ],
     },
     includes: [
-      "The display, fully assembled and tested",
-      "One card holder (standard toploader) included",
-      "Wall-mount slot and screw, hangs in one minute",
-      "One printed piece per half, no hardware inside",
+      "Fully assembled and tested",
+      'Standard 3" toploader included',
+      "Hangs on one screw (included)",
     ],
     steps: [
       { n: "01", t: "Lift", d: "The top half pulls straight off the rails. The base stays put on the wall." },
@@ -67,12 +66,9 @@ export const products: Product[] = [
     ],
     specs: [
       ["Fits", '3" × 4-1/16" toploaders, 35pt (BCW / Ultra Pro standard)'],
-      ["Diameter", '4.9" (125 mm)'],
-      ["Depth", '0.8" body, 0.95" at the button'],
-      ["Retention", "Rails seat into deep sockets in the top, no magnets or glue"],
+      ["Size", '4.9" wide · 8.3" tall · 0.8" deep'],
       ["Mount", "Keyhole slot, #6 or #8 pan-head screw"],
       ["Material", "Matte PLA plastic, fine layer finish"],
-      ["Card safety", "Only the holder touches the display, never your card"],
     ],
     tint: "#c22e2a",
   },

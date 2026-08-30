@@ -233,7 +233,10 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
               : "border-border bg-card hover:bg-foreground hover:text-background"
           }`}
         >
-          {playing ? "Pause mechanism" : "Play mechanism"}
+          <span className="grid">
+            <span className="invisible col-start-1 row-start-1">Pause mechanism</span>
+            <span className="col-start-1 row-start-1">{playing ? "Pause mechanism" : "Play mechanism"}</span>
+          </span>
         </motion.button>
         {dims.length + points.length > 0 && (
           <motion.button
@@ -250,23 +253,27 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
           </motion.button>
         )}
         {colorways && colorways.length > 1 && (
-          <div role="radiogroup" aria-label="Colorway" className="flex items-center gap-2 pl-1">
+          <div role="group" aria-label="Colorway" className="flex items-center gap-0.5">
             {colorways.map((c, i) => (
               <button
                 key={c.name}
-                role="radio"
-                aria-checked={i === cw}
+                aria-pressed={i === cw}
                 aria-label={c.name}
                 title={c.name}
                 onClick={() => setCw(i)}
-                className={`h-5 w-5 rounded-full border-2 transition-transform ${
-                  i === cw ? "scale-110 ring-2 ring-foreground ring-offset-1" : "hover:scale-110"
-                }`}
-                style={{
-                  background: c.materials.pk_red ?? "#ccc",
-                  borderColor: c.materials.pk_black ?? "var(--color-border)",
-                }}
-              />
+                className="grid h-9 w-9 place-items-center rounded-full"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-5 w-5 rounded-full border-2 transition-transform ${
+                    i === cw ? "scale-110 ring-2 ring-foreground ring-offset-1" : "group-hover:scale-110"
+                  }`}
+                  style={{
+                    background: c.materials.pk_red ?? "#ccc",
+                    borderColor: c.materials.pk_black ?? "var(--color-border)",
+                  }}
+                />
+              </button>
             ))}
             <span className="ml-1 font-mono text-[10px] font-semibold text-muted-fg">
               {colorways[cw]?.name}
