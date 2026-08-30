@@ -23,30 +23,60 @@ export type Product = {
   tint: string;          // card tile accent
 };
 
-// Every spool physically in stock; per-part customization draws from this list
-export const FILAMENTS: { name: string; hex: string }[] = [
-  { name: "Jade White", hex: "#f2f3f0" },
-  { name: "Black", hex: "#161616" },
-  { name: "Silver", hex: "#8b9398" },
-  { name: "Red", hex: "#c22e2a" },
-  { name: "Orange", hex: "#e07a2f" },
-  { name: "Yellow", hex: "#f5d020" },
-  { name: "Green", hex: "#3f8f4f" },
-  { name: "Cyan", hex: "#4fb6c9" },
-  { name: "Blue", hex: "#2f6bbf" },
-  { name: "Marine Blue", hex: "#2e5c8a" },
-  { name: "Purple", hex: "#6b4ba1" },
-  { name: "Brown", hex: "#6f4a35" },
-  { name: "Beige", hex: "#d9c9a8" },
-  { name: "Terracotta", hex: "#b65a41" },
+// Every spool physically on hand. This list is the catalog's source of truth:
+// if it isn't here, it can't be ordered. Update grams as spools run down, and
+// only add a row once the filament is actually in the room.
+//
+// Sources: Bambu order confirmation 2026-08-30, and the official
+// "PLA Basic Color Trial Set" hex code table for the 250g colors.
+export type Filament = {
+  name: string;
+  hex: string;
+  finish: "Matte" | "Gloss"; // what the buyer sees; never name the polymer
+  material: "PLA Basic" | "PLA Matte" | "PETG HF"; // internal: slicing + reorder
+  grams: number;    // on hand right now
+  spooled: boolean; // refills and paper spools need a reusable core for the AMS
+};
+
+// One row per color the buyer can see. Where a color exists in more than one
+// stock (Black and Gray are in both the trial set and a 1kg PETG spool) the
+// bigger spool wins, since it prints more units before it runs dry.
+export const FILAMENTS: Filament[] = [
+  // 1kg spools, the workhorses
+  { name: "Black",       hex: "#161616", finish: "Gloss", material: "PETG HF",   grams: 1000, spooled: true },
+  { name: "Gray",        hex: "#9a9d9f", finish: "Gloss", material: "PETG HF",   grams: 1000, spooled: true },
+  { name: "Terracotta",  hex: "#b06046", finish: "Matte", material: "PLA Matte", grams: 1000, spooled: false },
+  { name: "Marine Blue", hex: "#2e5c8a", finish: "Matte", material: "PLA Matte", grams: 1000, spooled: false },
+
+  // 250g trial-set colors. Roughly two finished pieces each, so these run out
+  // fast. MIN_GRAMS below pulls any of them off the site automatically.
+  { name: "White",   hex: "#ffffff", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Beige",   hex: "#f7e6de", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Yellow",  hex: "#f4ee2a", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Green",   hex: "#00ae42", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Cyan",    hex: "#0086d6", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Blue",    hex: "#0a2989", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Purple",  hex: "#5e43b7", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Red",     hex: "#c12e1f", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Orange",  hex: "#ff6a13", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+  { name: "Cocoa",   hex: "#6f5034", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
 ];
+
+// Conservative grams for one finished Capsule Slab, top + base + stripe.
+// Replace with the real figure off a Bambu Studio slice.
+export const GRAMS_PER_UNIT = 90;
+// A color needs at least one full unit left to be honestly sellable.
+export const MIN_GRAMS = GRAMS_PER_UNIT;
+
+/** Colors the site is allowed to offer right now. */
+export const CATALOG_FILAMENTS = FILAMENTS.filter((f) => f.grams >= MIN_GRAMS);
 
 export const products: Product[] = [
   {
     slug: "capsule-slab",
     name: "Capsule Slab",
     series: "001 · WALL MOUNT SERIES",
-    price: "$27.99",
+    price: "$34.99", // shipping baked in, see policies page
     tagline: "Put your best card on the wall. No tools, no frame, no fingerprints.",
     blurb:
       "Lift the top, slide your card in, snap it shut. Hangs on the wall or stands on a shelf. The preview here is the real thing, so grab it and spin it.",
@@ -66,6 +96,7 @@ export const products: Product[] = [
       ],
     },
     includes: [
+      "Free shipping in the US",
       "Fully assembled and tested",
       'Standard 3" toploader included',
       "Hangs on one screw (included)",
@@ -79,7 +110,8 @@ export const products: Product[] = [
       ["Fits", '3" × 4-1/16" toploaders, 35pt (BCW / Ultra Pro standard)'],
       ["Size", '4.9" wide · 8.3" tall · 0.8" deep'],
       ["Mount", "Keyhole slot, #6 or #8 pan-head screw"],
-      ["Material", "Matte PLA plastic, fine layer finish"],
+      ["Finish", "Matte or gloss, depending on the color"],
+      ["Feel", "Rigid printed plastic, fine layer lines, indoor display"],
     ],
     tint: "#c22e2a",
   },

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { FILAMENTS } from "../lib/products";
+import { CATALOG_FILAMENTS as FILAMENTS } from "../lib/products";
 
 type MV = HTMLElement & {
   play: (o?: { repetitions: number }) => void;
@@ -31,8 +31,18 @@ export type Colorway = { name: string; materials: Record<string, string> };
 // choice, not ours, which is the distinction the whole trade-dress
 // mitigation rests on. See ip-sell-check.
 const HOUSE_STRIPE = "#161616";
-const RED_HEX = "#c22e2a";
-const WHITE_HEX = "#f2f3f0";
+// Keyed to the catalog by name, not to literal hexes, so a filament restock
+// that changes a hex can't silently disarm the guard. If either color leaves
+// the catalog the lookup goes undefined and the pairing simply can't occur.
+const hexOf = (name: string) => FILAMENTS.find((f) => f.name === name)?.hex;
+const RED_HEX = hexOf("Red");
+// Every near-white base we stock. Red over any of these reads as the trade
+// dress we're steering around, not just the one pure white.
+const WHITE_HEXES = ["White", "Beige"]
+  .map(hexOf)
+  .filter((h): h is string => Boolean(h));
+const isTradeDress = (top: string, base: string) =>
+  Boolean(RED_HEX) && top === RED_HEX && WHITE_HEXES.includes(base);
 const PARTS: { label: string; mat: string }[] = [
   { label: "Top", mat: "pk_red" },
   { label: "Base", mat: "pk_white" },
@@ -41,7 +51,10 @@ const randomHex = () => FILAMENTS[Math.floor(Math.random() * FILAMENTS.length)].
 const withHouse = (m: Record<string, string> = {}): Record<string, string> => {
   const top = m.pk_red ?? randomHex();
   let base = m.pk_white ?? randomHex();
-  while (top === RED_HEX && base === WHITE_HEX) base = randomHex();
+  // Bounded: the catalog always holds more colors than the guarded set, but
+  // cap the retries anyway so a thin catalog can never spin forever.
+  for (let i = 0; i < 20 && isTradeDress(top, base); i++) base = randomHex();
+  if (isTradeDress(top, base)) base = HOUSE_STRIPE;
   return { pk_red: top, pk_white: base, pk_black: HOUSE_STRIPE };
 };
 type Props = {
@@ -154,7 +167,7 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
           const pick = choices[Math.floor(Math.random() * choices.length)];
           if (pick) next[part.mat] = pick.hex;
         }
-        if (next.pk_red === RED_HEX && next.pk_white === WHITE_HEX) next.pk_white = current.pk_white;
+        if (isTradeDress(next.pk_red, next.pk_white)) next.pk_white = current.pk_white;
         return next;
       });
     }, 4000);
@@ -354,8 +367,8 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
                   <button
                     key={f.name}
                     aria-pressed={colors[part.mat] === f.hex}
-                    aria-label={`${part.label}: ${f.name}`}
-                    title={f.name}
+                    aria-label={`${part.label}: ${f.name}, ${f.finish.toLowerCase()} finish`}
+                    title={`${f.name} · ${f.finish}`}
                     onClick={() => {
                       setTouched(true);
                       setColors((c) => ({ ...c, [part.mat]: f.hex }));

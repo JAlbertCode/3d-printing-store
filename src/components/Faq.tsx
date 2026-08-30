@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { reveal, stagger } from "../lib/motion";
+import { LEAD_TIME, RETURN_WINDOW } from "../lib/config";
 
 const faqs = [
   {
@@ -8,15 +9,27 @@ const faqs = [
   },
   {
     q: "When will my order arrive?",
-    a: "Each piece is made when you order it, then shipped within 3 to 5 business days. You'll get tracking as soon as it's on the way.",
+    a: `Each piece is made when you order it, then shipped within ${LEAD_TIME}. You'll get tracking as soon as it's on the way.`,
   },
   {
     q: "Can I get different colors?",
-    a: "Stock products ship in the colors shown. Want a different combo? Mention it when you order. Most color swaps are free.",
+    a: "Yes, and it's free. Pick the top and the base separately at checkout from every color we keep in stock. Spin the 3D preview to see the combination before you buy.",
+  },
+  {
+    q: "What is it made of?",
+    a: "Rigid printed plastic, built up in fine layers. Colors come in either a matte or a gloss finish, noted on each swatch. We pick the right stock for the job so you only have to pick a color.",
+  },
+  {
+    q: "What does shipping cost?",
+    a: "Nothing. Shipping is already in the price for anywhere in the US, so the number on the product page is the number you pay, plus whatever sales tax your state adds at checkout.",
   },
   {
     q: "What if it arrives damaged?",
-    a: "Email us a photo and we'll make you a new one. Simple as that.",
+    a: "Email us a photo and we'll print you a new one, free, no need to send the broken one back.",
+  },
+  {
+    q: "Can I return it?",
+    a: `Stock pieces, yes, within ${RETURN_WINDOW} if they come back unused. Custom commissions are made for one person so they can't be returned, though the damage policy still covers them.`,
   },
 ];
 
@@ -39,6 +52,16 @@ export default function Faq() {
           </motion.div>
         ))}
       </motion.div>
+      <motion.a
+        variants={reveal}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.2 }}
+        href="#/policies"
+        className="mt-8 inline-block font-mono text-xs font-semibold hover:text-primary"
+      >
+        Full shipping &amp; returns detail →
+      </motion.a>
     </section>
   );
 }

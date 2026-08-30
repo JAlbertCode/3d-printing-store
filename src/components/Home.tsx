@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { products } from "../lib/products";
+import { LEAD_TIME } from "../lib/config";
 import ModelStage from "./ModelStage";
 import Commissions from "./Commissions";
 import Faq from "./Faq";
@@ -15,6 +16,7 @@ export default function Home() {
   return (
     <>
       <motion.section
+        id="shop"
         variants={stagger}
         initial="hidden"
         animate="show"
@@ -61,7 +63,7 @@ export default function Home() {
             </li>
             <li className="flex items-center gap-2.5">
               <span className="h-1.5 w-1.5 flex-none rounded-full bg-accent" />
-              On its way to you in 3 to 5 business days
+              {`Free US shipping, on its way in ${LEAD_TIME}`}
             </li>
           </ul>
         </motion.div>
