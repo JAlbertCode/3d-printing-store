@@ -73,15 +73,6 @@ export default function Home() {
             callouts={featured.model!.callouts}
             colorways={featured.model!.colorways}
           />
-          <p className="mt-2 text-right font-mono text-xs text-muted-fg">
-            shown above:{" "}
-            <a
-              className="font-semibold underline hover:text-primary"
-              href={`#/p/${featured.slug}`}
-            >
-              {featured.name}
-            </a>
-          </p>
         </motion.div>
       </motion.section>
 
