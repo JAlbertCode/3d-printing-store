@@ -25,7 +25,7 @@ export default function ProductPage({ p }: { p: Product }) {
         </motion.div>
         <motion.div variants={reveal}>
           {p.model ? (
-            <ModelStage src={p.model.src} alt={p.model.alt} animation={p.model.animation} callouts={p.model.callouts} />
+            <ModelStage src={p.model.src} alt={p.model.alt} animation={p.model.animation} callouts={p.model.callouts} colorways={p.model.colorways} />
           ) : (
             <div className="hardcard grid h-72 place-items-center font-mono text-sm text-muted-fg">
               model preview coming soon

@@ -71,6 +71,7 @@ export default function Home() {
             alt={featured.model!.alt}
             animation={featured.model!.animation}
             callouts={featured.model!.callouts}
+            colorways={featured.model!.colorways}
           />
           <p className="mt-2 text-right font-mono text-xs text-muted-fg">
             shown above:{" "}

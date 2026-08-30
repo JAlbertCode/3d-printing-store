@@ -4,6 +4,12 @@ import { motion, useReducedMotion } from "framer-motion";
 type MV = HTMLElement & {
   play: (o?: { repetitions: number }) => void;
   pause: () => void;
+  model?: {
+    materials: Array<{
+      name: string;
+      pbrMetallicRoughness: { setBaseColorFactor: (c: [number, number, number, number]) => void };
+    }>;
+  };
   queryHotspot?: (name: string) => {
     canvasPosition: { x: number; y: number };
     facingCamera: boolean;
@@ -13,19 +19,39 @@ type MV = HTMLElement & {
 type PointCallout = { label: string; position: string; normal?: string };
 type DimCallout = { label: string; from: string; to: string; labelAt: string };
 export type Callout = PointCallout | DimCallout;
-type Props = { src: string; alt: string; animation?: string; callouts?: Callout[] };
+export type Colorway = { name: string; materials: Record<string, string> };
+type Props = {
+  src: string;
+  alt: string;
+  animation?: string;
+  callouts?: Callout[];
+  colorways?: Colorway[];
+};
 
 const isDim = (c: Callout): c is DimCallout => "from" in c;
+const srgbToLinear = (v: number) =>
+  v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+const hexToFactor = (hex: string): [number, number, number, number] => {
+  const n = parseInt(hex.replace("#", ""), 16);
+  return [
+    srgbToLinear(((n >> 16) & 255) / 255),
+    srgbToLinear(((n >> 8) & 255) / 255),
+    srgbToLinear((n & 255) / 255),
+    1,
+  ];
+};
 const chip =
   "inline-flex items-center gap-1 border-2 border-border bg-card px-1.5 py-0.5 font-mono text-[9px] font-semibold shadow-[2px_2px_0_var(--color-border)]";
 
-export default function ModelStage({ src, alt, animation = "Scene", callouts }: Props) {
+export default function ModelStage({ src, alt, animation = "Scene", callouts, colorways }: Props) {
   const mv = useRef<MV | null>(null);
   const svg = useRef<SVGSVGElement | null>(null);
   const [ready, setReady] = useState(false);   // viewer lib code-split, loaded on demand
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(true);
+  const [cw, setCw] = useState(0);
+  const [showDims, setShowDims] = useState(true);
   const reduceMotion = useReducedMotion();
   const dims = (callouts ?? []).filter(isDim);
   const points = (callouts ?? []).filter((c): c is PointCallout => !isDim(c));
@@ -55,11 +81,21 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts }: 
     };
   }, [ready, reduceMotion]);
 
+  useEffect(() => {
+    const el = mv.current;
+    if (!el || !loaded || !colorways?.length) return;
+    const pick = colorways[Math.min(cw, colorways.length - 1)];
+    for (const [matName, hex] of Object.entries(pick.materials)) {
+      const mat = el.model?.materials.find((m) => m.name === matName);
+      mat?.pbrMetallicRoughness.setBaseColorFactor(hexToFactor(hex));
+    }
+  }, [loaded, cw, colorways]);
+
   // keep the measurement lines glued to their 3D endpoints
   useEffect(() => {
     const el = mv.current;
     const sv = svg.current;
-    if (!el || !sv || !loaded || dims.length === 0) return;
+    if (!el || !sv || !loaded || dims.length === 0 || !showDims) return;
     let raf = 0;
     const tick = () => {
       sv.setAttribute("viewBox", `0 0 ${el.clientWidth} ${el.clientHeight}`);
@@ -79,7 +115,7 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts }: 
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [loaded, dims.length]);
+  }, [loaded, dims.length, showDims]);
 
   const togglePlay = () => {
     const el = mv.current;
@@ -128,7 +164,7 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts }: 
           interaction-prompt="none"
           style={{ "--min-hotspot-opacity": "0.15" } as React.CSSProperties}
         >
-          {points.map((c, i) => (
+          {showDims && points.map((c, i) => (
             <div
               key={c.label}
               slot={`hotspot-p${i}`}
@@ -142,7 +178,7 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts }: 
               </span>
             </div>
           ))}
-          {dims.map((d, i) => (
+          {showDims && dims.map((d, i) => (
             <Fragment key={d.label}>
               <div
                 slot={`hotspot-d${i}a`}
@@ -166,7 +202,7 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts }: 
               </div>
             </Fragment>
           ))}
-          {dims.length > 0 && (
+          {showDims && dims.length > 0 && (
             <svg
               ref={svg}
               className="pointer-events-none absolute inset-0 h-full w-full"
@@ -186,7 +222,7 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts }: 
         )}
         {!ready && <div style={{ height: "min(58vh, 540px)" }} />}
       </div>
-      <div className="flex items-center gap-2.5 border-t-2 border-border bg-background p-3">
+      <div className="flex flex-wrap items-center gap-2.5 border-t-2 border-border bg-background p-3">
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={togglePlay}
@@ -199,6 +235,44 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts }: 
         >
           {playing ? "Pause mechanism" : "Play mechanism"}
         </motion.button>
+        {dims.length + points.length > 0 && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setShowDims((v) => !v)}
+            aria-pressed={showDims}
+            className={`rounded-md border-2 px-3 py-2 font-mono text-xs font-semibold transition-colors ${
+              showDims
+                ? "border-border bg-foreground text-background"
+                : "border-border bg-card hover:bg-foreground hover:text-background"
+            }`}
+          >
+            Dimensions
+          </motion.button>
+        )}
+        {colorways && colorways.length > 1 && (
+          <div role="radiogroup" aria-label="Colorway" className="flex items-center gap-2 pl-1">
+            {colorways.map((c, i) => (
+              <button
+                key={c.name}
+                role="radio"
+                aria-checked={i === cw}
+                aria-label={c.name}
+                title={c.name}
+                onClick={() => setCw(i)}
+                className={`h-5 w-5 rounded-full border-2 transition-transform ${
+                  i === cw ? "scale-110 ring-2 ring-foreground ring-offset-1" : "hover:scale-110"
+                }`}
+                style={{
+                  background: c.materials.pk_red ?? "#ccc",
+                  borderColor: c.materials.pk_black ?? "var(--color-border)",
+                }}
+              />
+            ))}
+            <span className="ml-1 font-mono text-[10px] font-semibold text-muted-fg">
+              {colorways[cw]?.name}
+            </span>
+          </div>
+        )}
         <span className="ml-auto text-xs text-muted-fg">
           drag to spin it around
         </span>

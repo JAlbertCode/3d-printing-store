@@ -14,6 +14,7 @@ export type Product = {
       | { label: string; position: string; normal?: string }
       | { label: string; from: string; to: string; labelAt: string }
     )[];
+    colorways?: { name: string; materials: Record<string, string> }[];
   };
   includes: string[];
   steps?: { n: string; t: string; d: string }[];
@@ -33,9 +34,19 @@ export const products: Product[] = [
       "Lift the top, slide your card in, snap it shut. Hangs on the wall or stands on a shelf. The preview here is the real thing, so grab it and spin it.",
     status: "available",
     model: {
-      src: "models/capsule_slab.glb?v=4",
+      src: "models/capsule_slab.glb?v=5",
       alt: "Capsule Slab card display: the top half lifts off, a toploader slides down the rails, and the top snaps back on",
       animation: "Scene",
+      // every colorway maps to filament physically in stock
+      colorways: [
+        { name: "Scarlet", materials: { pk_red: "#c22e2a", pk_black: "#161616" } },
+        { name: "Marine", materials: { pk_red: "#2e5c8a", pk_black: "#161616" } },
+        { name: "Night", materials: { pk_red: "#1b1c20", pk_black: "#f5d020" } },
+        { name: "Violet", materials: { pk_red: "#6b4ba1", pk_black: "#161616" } },
+        { name: "Frost", materials: { pk_red: "#f2f3f0", pk_black: "#c22e2a" } },
+        { name: "Terra", materials: { pk_red: "#b65a41", pk_black: "#161616" } },
+        { name: "Slate", materials: { pk_red: "#8b9398", pk_black: "#161616" } },
+      ],
       callouts: [
         { label: "4.9\" wide", from: "-63.3 -88 24", to: "63.3 -88 24", labelAt: "0 -102 24" },
         { label: "8.3\" tall", from: "92 -55.5 24", to: "92 155 24", labelAt: "108 50 24" },
