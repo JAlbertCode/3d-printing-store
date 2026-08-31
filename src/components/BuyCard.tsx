@@ -91,7 +91,7 @@ export default function BuyCard({ p, selection }: { p: Product; selection?: Sele
         {ready ? "Buy now" : "Choose your colors"}
       </motion.a>
 
-      <p className="mt-3 flex items-center gap-2 text-xs text-muted-fg">
+      <p className="mt-3 flex items-center gap-2 whitespace-nowrap text-[11px] text-muted-fg">
         <span
           className={
             "h-2 w-2 flex-none rounded-full " +

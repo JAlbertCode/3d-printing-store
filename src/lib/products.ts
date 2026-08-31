@@ -94,7 +94,7 @@ export const products: Product[] = [
     },
     includes: [
       "Free US shipping",
-      "Toploader and screw included",
+      "Card cover and wall adhesive included",
       "Assembled and test-fitted",
     ],
     steps: [
@@ -105,7 +105,7 @@ export const products: Product[] = [
     specs: [
       ["Fits", '3" × 4-1/16" toploaders, 35pt (BCW / Ultra Pro standard)'],
       ["Size", '4.9" wide · 8.3" tall · 0.8" deep'],
-      ["Mount", "Keyhole slot, #6 or #8 pan-head screw"],
+      ["Mount", "Adhesive strip, no drilling"],
       ["Finish", "Gloss"],
     ],
     tint: "#c22e2a",
