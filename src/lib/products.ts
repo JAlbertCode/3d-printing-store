@@ -48,11 +48,16 @@ const FILAMENTS: Filament[] = [
   { name: "Cocoa",  hex: "#6f5034", grams: 250 },
 ];
 
-// Conservative grams for one finished piece, top + base + stripe. Replace with
-// the real figure off a Bambu Studio slice. A color needs at least this much
-// left to be honestly sellable, so lowering it means selling what you can't
-// print.
-const GRAMS_PER_UNIT = 90;
+// Measured off a Bambu Studio slice, 2026-08-31: both pieces on one plate,
+// 0.20mm Standard @BBL X2D, PLA Basic. 93.41 g and 1h53m for the pair,
+// rounded up. A color needs at least this much left to be honestly sellable,
+// so lowering it means selling what you can't print.
+//
+// Deliberately coarse: a real order splits across three spools (top, base,
+// stripe), so no single color actually burns the full amount. Treating every
+// color as if it might means a spool drops off the site early rather than
+// late, which is the safe direction to be wrong in.
+const GRAMS_PER_UNIT = 94;
 
 /** Colors the site is allowed to offer right now. */
 export const CATALOG_FILAMENTS = FILAMENTS.filter((f) => f.grams >= GRAMS_PER_UNIT);
