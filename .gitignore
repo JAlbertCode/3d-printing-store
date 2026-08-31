@@ -3,3 +3,8 @@ dist
 .DS_Store
 _legacy
 *.blend1
+
+# secrets: never commit. STRIPE_SECRET_KEY must NOT use a VITE_ prefix,
+# Vite inlines VITE_* into the public client bundle.
+.env
+.env.local

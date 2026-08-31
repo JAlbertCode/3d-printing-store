@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     q: "What is it made of?",
-    a: "Rigid printed plastic, built up in fine layers. Colors come in either a matte or a gloss finish, noted on each swatch. We pick the right stock for the job so you only have to pick a color.",
+    a: "Rigid PLA plastic with a gloss finish, printed in fine layers. Same material and finish in every color, so the only thing you're choosing is the color.",
   },
   {
     q: "What does shipping cost?",

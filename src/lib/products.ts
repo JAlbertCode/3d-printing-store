@@ -23,43 +23,39 @@ export type Product = {
   tint: string;          // card tile accent
 };
 
-// Every spool physically on hand. This list is the catalog's source of truth:
-// if it isn't here, it can't be ordered. Update grams as spools run down, and
-// only add a row once the filament is actually in the room.
+// Every spool physically on hand that this catalog sells from. One material,
+// one finish, so a product page can state its finish flatly instead of
+// hedging. Update grams as spools run down; only add a row once the filament
+// is actually in the room.
 //
-// Sources: Bambu order confirmation 2026-08-30, and the official
-// "PLA Basic Color Trial Set" hex code table for the 250g colors.
+// Source: the PLA Basic Color Trial Set official hex code table.
+//
+// Deliberately NOT listed: the 1kg PLA Matte spools (Terracotta, Marine Blue)
+// and the 1kg PETG HF spools (Black, Gray). They're on the shelf, but mixing
+// them in would put two different sheens on one piece. They're held for
+// commissions and for future products that need the toughness.
 export type Filament = {
   name: string;
   hex: string;
-  finish: "Matte" | "Gloss"; // what the buyer sees; never name the polymer
-  material: "PLA Basic" | "PLA Matte" | "PETG HF"; // internal: slicing + reorder
-  grams: number;    // on hand right now
-  spooled: boolean; // refills and paper spools need a reusable core for the AMS
+  grams: number; // on hand right now
 };
 
-// One row per color the buyer can see. Where a color exists in more than one
-// stock (Black and Gray are in both the trial set and a 1kg PETG spool) the
-// bigger spool wins, since it prints more units before it runs dry.
-export const FILAMENTS: Filament[] = [
-  // 1kg spools, the workhorses
-  { name: "Black",       hex: "#161616", finish: "Gloss", material: "PETG HF",   grams: 1000, spooled: true },
-  { name: "Gray",        hex: "#9a9d9f", finish: "Gloss", material: "PETG HF",   grams: 1000, spooled: true },
-  { name: "Terracotta",  hex: "#b06046", finish: "Matte", material: "PLA Matte", grams: 1000, spooled: false },
-  { name: "Marine Blue", hex: "#2e5c8a", finish: "Matte", material: "PLA Matte", grams: 1000, spooled: false },
+export const MATERIAL = "PLA Basic"; // internal: slicer profile and reorders
+export const FINISH = "Gloss";       // what the buyer sees
 
-  // 250g trial-set colors. Roughly two finished pieces each, so these run out
-  // fast. MIN_GRAMS below pulls any of them off the site automatically.
-  { name: "White",   hex: "#ffffff", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Beige",   hex: "#f7e6de", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Yellow",  hex: "#f4ee2a", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Green",   hex: "#00ae42", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Cyan",    hex: "#0086d6", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Blue",    hex: "#0a2989", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Purple",  hex: "#5e43b7", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Red",     hex: "#c12e1f", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Orange",  hex: "#ff6a13", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
-  { name: "Cocoa",   hex: "#6f5034", finish: "Gloss", material: "PLA Basic", grams: 250, spooled: false },
+export const FILAMENTS: Filament[] = [
+  { name: "Black",  hex: "#000000", grams: 250 },
+  { name: "White",  hex: "#ffffff", grams: 250 },
+  { name: "Gray",   hex: "#8e9089", grams: 250 },
+  { name: "Beige",  hex: "#f7e6de", grams: 250 },
+  { name: "Red",    hex: "#c12e1f", grams: 250 },
+  { name: "Orange", hex: "#ff6a13", grams: 250 },
+  { name: "Yellow", hex: "#f4ee2a", grams: 250 },
+  { name: "Green",  hex: "#00ae42", grams: 250 },
+  { name: "Cyan",   hex: "#0086d6", grams: 250 },
+  { name: "Blue",   hex: "#0a2989", grams: 250 },
+  { name: "Purple", hex: "#5e43b7", grams: 250 },
+  { name: "Cocoa",  hex: "#6f5034", grams: 250 },
 ];
 
 // Conservative grams for one finished Capsule Slab, top + base + stripe.
@@ -81,6 +77,7 @@ export const products: Product[] = [
     blurb:
       "Lift the top, slide your card in, snap it shut. Hangs on the wall or stands on a shelf. The preview here is the real thing, so grab it and spin it.",
     status: "available",
+    buyUrl: "https://buy.stripe.com/28EcMZ7YXeYo9k51TU9oc02",
     model: {
       src: "models/capsule_slab.glb?v=5",
       alt: "Capsule Slab card display: the top half lifts off, a toploader slides down the rails, and the top snaps back on",
@@ -96,10 +93,9 @@ export const products: Product[] = [
       ],
     },
     includes: [
-      "Free shipping in the US",
-      "Fully assembled and tested",
-      'Standard 3" toploader included',
-      "Hangs on one screw (included)",
+      "Free US shipping",
+      "Toploader and screw included",
+      "Assembled and test-fitted",
     ],
     steps: [
       { n: "01", t: "Lift", d: "The top half pulls straight off the rails. The base stays put on the wall." },
@@ -110,8 +106,7 @@ export const products: Product[] = [
       ["Fits", '3" × 4-1/16" toploaders, 35pt (BCW / Ultra Pro standard)'],
       ["Size", '4.9" wide · 8.3" tall · 0.8" deep'],
       ["Mount", "Keyhole slot, #6 or #8 pan-head screw"],
-      ["Finish", "Matte or gloss, depending on the color"],
-      ["Feel", "Rigid printed plastic, fine layer lines, indoor display"],
+      ["Finish", "Gloss"],
     ],
     tint: "#c22e2a",
   },

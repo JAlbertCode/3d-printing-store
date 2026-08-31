@@ -3,14 +3,52 @@ import { motion } from "framer-motion";
 import type { Product } from "../lib/products";
 import { SHIP_NOTE } from "../lib/config";
 
-export default function BuyCard({ p }: { p: Product }) {
-  const [note, setNote] = useState(false);
+export type Selection = { top: string; base: string };
+
+/**
+ * Colors are chosen here, on the site, not at checkout. The Stripe link
+ * carries no color dropdowns: the pairing rides along as client_reference_id
+ * and shows up beside the order in the dashboard.
+ *
+ * That only holds if a pick is genuinely required before anyone can reach
+ * Stripe, which is why the button is inert until `selection` exists.
+ */
+const referenceFor = (sel: Selection) =>
+  `top-${sel.top}-base-${sel.base}`.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 200);
+
+const withReference = (url: string, sel: Selection) =>
+  url + (url.includes("?") ? "&" : "?") + `client_reference_id=${referenceFor(sel)}`;
+
+export default function BuyCard({ p, selection }: { p: Product; selection?: Selection }) {
+  const [note, setNote] = useState("");
+  const ready = Boolean(selection && p.buyUrl);
+
+  const flash = (msg: string) => {
+    setNote(msg);
+    setTimeout(() => setNote(""), 2400);
+  };
 
   const onBuy = (e: React.MouseEvent) => {
-    if (p.buyUrl) return;
-    e.preventDefault();
-    setNote(true);
-    setTimeout(() => setNote(false), 2200);
+    if (!p.buyUrl) {
+      e.preventDefault();
+      flash("Checkout link coming soon");
+      return;
+    }
+    if (!selection) {
+      e.preventDefault();
+      flash("Pick a top and base color first");
+      return;
+    }
+    // Stripe's receipt can't show the colors, so stash them for the
+    // thank-you page to read back. Same browser, same session, no server.
+    try {
+      sessionStorage.setItem(
+        "lw:lastOrder",
+        JSON.stringify({ name: p.name, ...selection })
+      );
+    } catch {
+      /* private mode: the reference id on the order is still authoritative */
+    }
   };
 
   return (
@@ -18,15 +56,7 @@ export default function BuyCard({ p }: { p: Product }) {
       aria-label="Purchase"
       className="hardcard p-4 shadow-[8px_8px_0_var(--color-primary)] sm:p-5"
     >
-      <div className="flex items-center justify-between gap-3 border-b-2 border-border pb-3">
-        <span className="font-mono text-sm font-semibold uppercase">{p.name}</span>
-        <span className="rounded-sm border-2 border-primary px-2 py-1 text-center font-mono text-[10px] leading-tight text-primary">
-          MADE TO
-          <br />
-          ORDER
-        </span>
-      </div>
-      <p className="display mt-3 text-4xl">{p.price}</p>
+      <p className="display text-4xl">{p.price}</p>
       <ul className="mt-3 mb-4 text-sm">
         {p.includes.map((t) => (
           <li key={t} className="border-b border-hairline py-1.5 last:border-0">
@@ -34,17 +64,41 @@ export default function BuyCard({ p }: { p: Product }) {
           </li>
         ))}
       </ul>
+
+      <dl className="mb-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-t-2 border-border pt-3 font-mono text-[11px]">
+        <dt className="font-semibold uppercase tracking-wide text-muted-fg">Top</dt>
+        <dd className={selection ? "" : "text-muted-fg"}>
+          {selection ? selection.top : "not picked"}
+        </dd>
+        <dt className="font-semibold uppercase tracking-wide text-muted-fg">Base</dt>
+        <dd className={selection ? "" : "text-muted-fg"}>
+          {selection ? selection.base : "not picked"}
+        </dd>
+      </dl>
+
       <motion.a
-        whileTap={{ scale: 0.98 }}
-        href={p.buyUrl || "#"}
+        whileTap={ready ? { scale: 0.98 } : undefined}
+        href={ready ? withReference(p.buyUrl!, selection!) : "#"}
         onClick={onBuy}
-        className="display block rounded-md border-2 border-border bg-primary py-3.5 text-center text-primary-fg transition-colors hover:bg-foreground"
+        aria-disabled={!ready}
+        className={
+          "display block rounded-md border-2 border-border py-3.5 text-center transition-colors " +
+          (ready
+            ? "bg-primary text-primary-fg hover:bg-foreground"
+            : "cursor-not-allowed bg-card text-muted-fg")
+        }
       >
-        {note ? "Checkout link coming soon" : "Buy now, printed to order"}
+        {ready ? "Buy now" : "Choose your colors"}
       </motion.a>
+
       <p className="mt-3 flex items-center gap-2 text-xs text-muted-fg">
-        <span className="h-2 w-2 flex-none rounded-full bg-accent shadow-[0_0_0_3px_rgba(0,161,75,.18)]" />
-        {SHIP_NOTE}
+        <span
+          className={
+            "h-2 w-2 flex-none rounded-full " +
+            (note ? "bg-primary" : "bg-accent shadow-[0_0_0_3px_rgba(0,161,75,.18)]")
+          }
+        />
+        {note || SHIP_NOTE}
       </p>
     </aside>
   );

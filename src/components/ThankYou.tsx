@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { reveal, stagger } from "../lib/motion";
 import { CONTACT_EMAIL, LEAD_TIME, SHIP_CARRIER } from "../lib/config";
+
+type LastOrder = { name: string; top: string; base: string };
 
 const steps = [
   {
@@ -21,6 +24,19 @@ const steps = [
 ];
 
 export default function ThankYou() {
+  // Written by the buy card just before the handoff to Stripe. Stripe's own
+  // receipt has no way to show the colors, so this is the only written
+  // confirmation the buyer gets. Absent if they came back in a new session.
+  const [order, setOrder] = useState<LastOrder | null>(null);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("lw:lastOrder");
+      if (raw) setOrder(JSON.parse(raw) as LastOrder);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   return (
     <>
       <motion.section
@@ -42,6 +58,19 @@ export default function ThankYou() {
           number on it. If anything below doesn't match what you expected, reply
           to that email and we'll sort it out.
         </motion.p>
+        {order && (
+          <motion.dl
+            variants={reveal}
+            className="hardcard mt-7 grid max-w-xs grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-md p-4 font-mono text-xs"
+          >
+            <dt className="font-semibold uppercase tracking-wide text-muted-fg">Piece</dt>
+            <dd>{order.name}</dd>
+            <dt className="font-semibold uppercase tracking-wide text-muted-fg">Top</dt>
+            <dd>{order.top}</dd>
+            <dt className="font-semibold uppercase tracking-wide text-muted-fg">Base</dt>
+            <dd>{order.base}</dd>
+          </motion.dl>
+        )}
       </motion.section>
 
       <section className="border-t-2 border-border px-[5vw] py-16">

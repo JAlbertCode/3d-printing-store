@@ -47,7 +47,7 @@ const sections: { h: string; body: string[] }[] = [
   {
     h: "What we make things out of",
     body: [
-      "Everything is printed in rigid plastic, built up in fine layers. Depending on the color you choose it arrives with either a matte or a gloss finish, which is noted on the swatch when you pick it. We choose the stock that suits the part, so you only ever have to choose a color.",
+      "Everything in the catalog is printed in PLA with a gloss finish, built up in fine layers. Same material in every color, so the color is the only choice you have to make.",
       "These are made for indoor display. Left in a hot car or a sunny window long enough, printed plastic can soften, so hang it somewhere you'd be happy to hang a photograph.",
     ],
   },

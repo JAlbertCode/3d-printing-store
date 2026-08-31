@@ -30,7 +30,7 @@ export type Colorway = { name: string; materials: Record<string, string> };
 // state. A customer dialing it in themselves in the customizer is their
 // choice, not ours, which is the distinction the whole trade-dress
 // mitigation rests on. See ip-sell-check.
-const HOUSE_STRIPE = "#161616";
+const HOUSE_STRIPE = "#000000";
 // Keyed to the catalog by name, not to literal hexes, so a filament restock
 // that changes a hex can't silently disarm the guard. If either color leaves
 // the catalog the lookup goes undefined and the pairing simply can't occur.
@@ -63,6 +63,10 @@ type Props = {
   animation?: string;
   callouts?: Callout[];
   colorways?: Colorway[];
+  /** Fires whenever top/base change, so the buy card can carry the choice. */
+  onColorsChange?: (sel: { top: string; base: string }) => void;
+  /** Open the color picker on mount. Used where a pick is required to buy. */
+  defaultCustomize?: boolean;
 };
 
 const isDim = (c: Callout): c is DimCallout => "from" in c;
@@ -80,7 +84,7 @@ const hexToFactor = (hex: string): [number, number, number, number] => {
 const chip =
   "inline-flex items-center gap-1 border-2 border-border bg-card px-1.5 py-0.5 font-mono text-[9px] font-semibold shadow-[2px_2px_0_var(--color-border)]";
 
-export default function ModelStage({ src, alt, animation = "Scene", callouts, colorways }: Props) {
+export default function ModelStage({ src, alt, animation = "Scene", callouts, colorways, onColorsChange, defaultCustomize = false }: Props) {
   const mv = useRef<MV | null>(null);
   const svg = useRef<SVGSVGElement | null>(null);
   const [ready, setReady] = useState(false);   // viewer lib code-split, loaded on demand
@@ -91,12 +95,29 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
     withHouse(colorways?.[0]?.materials)
   );
   const [showDims, setShowDims] = useState(true);
-  const [customize, setCustomize] = useState(false);
+  const [customize, setCustomize] = useState(defaultCustomize);
   const [touched, setTouched] = useState(false);
+  // Distinct from `touched`: true only once a swatch is actually clicked.
+  // Opening the panel stops the idle cycle but doesn't mean the pair on
+  // screen was chosen, and we must not report a coin flip as a choice.
+  const [picked, setPicked] = useState(false);
   const shown = useRef<Record<string, string>>({});
   const reduceMotion = useReducedMotion();
   const dims = (callouts ?? []).filter(isDim);
   const points = (callouts ?? []).filter((c): c is PointCallout => !isDim(c));
+
+  // Report the current pairing upward by color name, never by hex, so the
+  // checkout handoff stays readable if a hex is ever corrected. Silent until
+  // the buyer has deliberately picked, so the buy card never implies a
+  // selection that was really just the idle showcase mid-rotation.
+  useEffect(() => {
+    if (!onColorsChange || !picked) return;
+    const nameOf = (hex: string) =>
+      FILAMENTS.find((f) => f.hex === hex)?.name ?? "";
+    const top = nameOf(colors.pk_red);
+    const base = nameOf(colors.pk_white);
+    if (top && base) onColorsChange({ top, base });
+  }, [colors, picked, onColorsChange]);
 
   useEffect(() => {
     import("@google/model-viewer").then(() => setReady(true)).catch(() => setFailed(true));
@@ -367,10 +388,11 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
                   <button
                     key={f.name}
                     aria-pressed={colors[part.mat] === f.hex}
-                    aria-label={`${part.label}: ${f.name}, ${f.finish.toLowerCase()} finish`}
-                    title={`${f.name} · ${f.finish}`}
+                    aria-label={`${part.label}: ${f.name}`}
+                    title={f.name}
                     onClick={() => {
                       setTouched(true);
+                      setPicked(true);
                       setColors((c) => ({ ...c, [part.mat]: f.hex }));
                     }}
                     className="relative grid h-7 w-7 place-items-center rounded-sm border border-border"
@@ -396,9 +418,6 @@ export default function ModelStage({ src, alt, animation = "Scene", callouts, co
                 ))}
               </div>
             ))}
-            <p className="mt-1 font-mono text-[10px] text-muted-fg">
-              the black stripe is the same on every Layerworks piece, top and base are yours to pick, and every color is a filament we stock printed exactly as shown
-            </p>
           </div>
         )}
       </div>
