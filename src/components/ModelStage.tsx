@@ -20,7 +20,6 @@ type MV = HTMLElement & {
 type PointCallout = { label: string; position: string; normal?: string };
 type DimCallout = { label: string; from: string; to: string; labelAt: string };
 export type Callout = PointCallout | DimCallout;
-export type Colorway = { name: string; materials: Record<string, string> };
 // House signature: every Layerworks piece has a black stripe. It's the one
 // fixed constant across the whole catalog. Top and base are the only parts
 // that customize or randomize, on load and on every idle-cycle tick, so no
@@ -48,9 +47,9 @@ const PARTS: { label: string; mat: string }[] = [
   { label: "Base", mat: "pk_white" },
 ];
 const randomHex = () => FILAMENTS[Math.floor(Math.random() * FILAMENTS.length)].hex;
-const withHouse = (m: Record<string, string> = {}): Record<string, string> => {
-  const top = m.pk_red ?? randomHex();
-  let base = m.pk_white ?? randomHex();
+const withHouse = (): Record<string, string> => {
+  const top = randomHex();
+  let base = randomHex();
   // Bounded: the catalog always holds more colors than the guarded set, but
   // cap the retries anyway so a thin catalog can never spin forever.
   for (let i = 0; i < 20 && isTradeDress(top, base); i++) base = randomHex();
@@ -62,7 +61,6 @@ type Props = {
   alt: string;
   animation?: string;
   callouts?: Callout[];
-  colorways?: Colorway[];
   /** Fires whenever top/base change, so the buy card can carry the choice. */
   onColorsChange?: (sel: { top: string; base: string }) => void;
   /** Open the color picker on mount. Used where a pick is required to buy. */
@@ -84,16 +82,14 @@ const hexToFactor = (hex: string): [number, number, number, number] => {
 const chip =
   "inline-flex items-center gap-1 border-2 border-border bg-card px-1.5 py-0.5 font-mono text-[9px] font-semibold shadow-[2px_2px_0_var(--color-border)]";
 
-export default function ModelStage({ src, alt, animation = "Scene", callouts, colorways, onColorsChange, defaultCustomize = false }: Props) {
+export default function ModelStage({ src, alt, animation = "Scene", callouts, onColorsChange, defaultCustomize = false }: Props) {
   const mv = useRef<MV | null>(null);
   const svg = useRef<SVGSVGElement | null>(null);
   const [ready, setReady] = useState(false);   // viewer lib code-split, loaded on demand
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(true);
-  const [colors, setColors] = useState<Record<string, string>>(() =>
-    withHouse(colorways?.[0]?.materials)
-  );
+  const [colors, setColors] = useState<Record<string, string>>(() => withHouse());
   const [showDims, setShowDims] = useState(true);
   const [customize, setCustomize] = useState(defaultCustomize);
   const [touched, setTouched] = useState(false);

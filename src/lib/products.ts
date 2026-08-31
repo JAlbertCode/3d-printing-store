@@ -3,7 +3,6 @@ export type Product = {
   name: string;
   series: string;        // catalog code, e.g. "001 · WALL MOUNT SERIES"
   price: string;
-  tagline: string;
   blurb: string;
   status: "available" | "coming-soon";
   model?: {
@@ -14,19 +13,17 @@ export type Product = {
       | { label: string; position: string; normal?: string }
       | { label: string; from: string; to: string; labelAt: string }
     )[];
-    colorways?: { name: string; materials: Record<string, string> }[];
   };
   includes: string[];
-  steps?: { n: string; t: string; d: string }[];
   specs?: [string, string][];
   buyUrl?: string;       // per-product checkout link
   tint: string;          // card tile accent
 };
 
-// Every spool physically on hand that this catalog sells from. One material,
-// one finish, so a product page can state its finish flatly instead of
-// hedging. Update grams as spools run down; only add a row once the filament
-// is actually in the room.
+// Every spool physically on hand that this catalog sells from. One material
+// and one finish across the board (PLA Basic, gloss), so a product page can
+// state its finish flatly instead of hedging. Update grams as spools run
+// down; only add a row once the filament is actually in the room.
 //
 // Source: the PLA Basic Color Trial Set official hex code table.
 //
@@ -34,16 +31,9 @@ export type Product = {
 // and the 1kg PETG HF spools (Black, Gray). They're on the shelf, but mixing
 // them in would put two different sheens on one piece. They're held for
 // commissions and for future products that need the toughness.
-export type Filament = {
-  name: string;
-  hex: string;
-  grams: number; // on hand right now
-};
+type Filament = { name: string; hex: string; grams: number };
 
-export const MATERIAL = "PLA Basic"; // internal: slicer profile and reorders
-export const FINISH = "Gloss";       // what the buyer sees
-
-export const FILAMENTS: Filament[] = [
+const FILAMENTS: Filament[] = [
   { name: "Black",  hex: "#000000", grams: 250 },
   { name: "White",  hex: "#ffffff", grams: 250 },
   { name: "Gray",   hex: "#8e9089", grams: 250 },
@@ -58,14 +48,14 @@ export const FILAMENTS: Filament[] = [
   { name: "Cocoa",  hex: "#6f5034", grams: 250 },
 ];
 
-// Conservative grams for one finished Capsule Slab, top + base + stripe.
-// Replace with the real figure off a Bambu Studio slice.
-export const GRAMS_PER_UNIT = 90;
-// A color needs at least one full unit left to be honestly sellable.
-export const MIN_GRAMS = GRAMS_PER_UNIT;
+// Conservative grams for one finished piece, top + base + stripe. Replace with
+// the real figure off a Bambu Studio slice. A color needs at least this much
+// left to be honestly sellable, so lowering it means selling what you can't
+// print.
+const GRAMS_PER_UNIT = 90;
 
 /** Colors the site is allowed to offer right now. */
-export const CATALOG_FILAMENTS = FILAMENTS.filter((f) => f.grams >= MIN_GRAMS);
+export const CATALOG_FILAMENTS = FILAMENTS.filter((f) => f.grams >= GRAMS_PER_UNIT);
 
 export const products: Product[] = [
   {
@@ -73,7 +63,6 @@ export const products: Product[] = [
     name: "Capsule Slab",
     series: "001 · WALL MOUNT SERIES",
     price: "$34.99", // shipping baked in, see policies page
-    tagline: "Put your best card on the wall. No tools, no frame, no fingerprints.",
     blurb:
       "Lift the top, slide your card in, snap it shut. Hangs on the wall or stands on a shelf. The preview here is the real thing, so grab it and spin it.",
     status: "available",
@@ -82,9 +71,6 @@ export const products: Product[] = [
       src: "models/capsule_slab.glb?v=5",
       alt: "Capsule Slab card display: the top half lifts off, a toploader slides down the rails, and the top snaps back on",
       animation: "Scene",
-      // no curated presets: top and base are free to land anywhere in
-      // FILAMENTS. the stripe is the one fixed constant, see HOUSE_STRIPE
-      // in ModelStage, so it never keeps the old white/black look in place
       callouts: [
         { label: "4.9\" wide", from: "-63.3 -88 24", to: "63.3 -88 24", labelAt: "0 -102 24" },
         { label: "8.3\" tall", from: "92 -55.5 24", to: "92 155 24", labelAt: "108 50 24" },
@@ -96,11 +82,6 @@ export const products: Product[] = [
       "Free US shipping",
       "Card cover and wall adhesive included",
       "Assembled and test-fitted",
-    ],
-    steps: [
-      { n: "01", t: "Lift", d: "The top half pulls straight off the rails. The base stays put on the wall." },
-      { n: "02", t: "Slide", d: "Your card, in its holder, drops down the side rails into a seated pocket. Nothing ever touches the card itself." },
-      { n: "03", t: "Press", d: "Set the top back onto the rails and press. They seat into deep sockets for a snug, square fit." },
     ],
     specs: [
       ["Fits", '3" × 4-1/16" toploaders, 35pt (BCW / Ultra Pro standard)'],
@@ -115,7 +96,6 @@ export const products: Product[] = [
     name: "Hard Pack",
     series: "002 · DESK SERIES",
     price: "$21.99",
-    tagline: "A flip-top phone stand with a bad habit.",
     blurb: "A working flip-top lid and a comfortable viewing lean. Holds any phone sideways.",
     status: "coming-soon",
     includes: ["Printed stand with working flip-top lid"],

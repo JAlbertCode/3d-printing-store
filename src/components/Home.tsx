@@ -73,7 +73,6 @@ export default function Home() {
             alt={featured.model!.alt}
             animation={featured.model!.animation}
             callouts={featured.model!.callouts}
-            colorways={featured.model!.colorways}
           />
         </motion.div>
       </motion.section>

@@ -10,8 +10,6 @@ export const CONTACT_EMAIL = "hello@layerworks.co"; // TODO: point at the real i
 // Per-product checkout links live in products.ts (buyUrl).
 // Custom requests go through the Google Form; responses land in the
 // "Layerworks custom requests" sheet on the store Google account.
-export const REQUEST_FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSf_j9FLxkSbfxweIE5t4lK90yUMenBg9lVT4cBZsRiBpVGUJg/viewform";
 export const REQUEST_FORM_ACTION =
   "https://docs.google.com/forms/d/e/1FAIpQLSf_j9FLxkSbfxweIE5t4lK90yUMenBg9lVT4cBZsRiBpVGUJg/formResponse";
 // Google Form field ids; the site's native form posts these names directly
